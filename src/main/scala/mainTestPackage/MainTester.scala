@@ -5,28 +5,18 @@ import org.apache.log4j.{Level, LogManager}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
 
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 
 object MainTester {
 
   /**
    *  A function that implements the main Query Optimization logic.
-   * @param fullMap: Dictionary
-   * @param costMap
-   * @return
+   * @param fullMap: Hashmap with (keys,values). Keys are the statements in AS statements and values are a list with all the possible tabs for join
+   * @param costMap: Hashmap with keys the tab names and values the corresponding join cost
+   * @return: String with the FULLY OPTIMIZED WHERE statement
    */
   def QueryOptimizerLogic(fullMap: HashMap[String, Array[String]], costMap: HashMap[String, Double]): String ={
-
-    /*
-      For Q2
-      Tabs Analysis:
-       -  tab0 -> As X -> GraduateStudent ->    Cost: 1379623
-       -  tab1 -> As Y -> University  ->        Cost: 724685
-       -  tab2 -> As Z -> Department  ->        Cost: 309815
-       -  tab3 -> AS X, AS Z -> memberOf ->     Cost: 5580609
-       -  tab4 -> AS Z, AS Y -> suborganOf->    Cost: 160140
-       -  tab5 -> AS X, AS Y -> undergraDegree->Cost: 1619476
-     */
 
     //    WHERE tab4.Z=tab2.Z AND tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab3.Z=tab4.Z AND tab5.X=tab0.X AND tab0.X=tab3.X
 
@@ -44,8 +34,6 @@ object MainTester {
 //    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140)
 //    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab1", "tab2", "tab3", "tab4"), "Y1" -> Array("tab2"), "Y2" -> Array("tab3"), "Y3" -> Array("tab4"))
 */
-
-    //TODO fullmap and costmap the most important here
 
     var bestComb : List[(String, Double)] = Nil // A list to preserve the best combinations
 
@@ -69,7 +57,6 @@ object MainTester {
         }
       }
 
-      //      println("List with all the combinations \t"+ tempComb)
       val sortedtempComb : List[(String, Double)]= tempComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
       //      println("List with SORTED the combinations \t"+ sortedtempComb)
 
@@ -83,7 +70,6 @@ object MainTester {
     val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
 
     //println("Final WHERE STATEMENT "+ finalWhereQuery) //WHERE sanity check
-
     finalWhereQuery
   }
 
@@ -104,8 +90,12 @@ object MainTester {
     // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statement)]
     val tableIdentifier: Array[(String, String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  StringUtils.substringAfter(x, "FROM").trim.split(" ")(0) ,x))
 
-    //TODO ADD THAT DYNAMICALLY
+//    tableIdentifier.foreach(println)
+
+    //TODO COMMENT THAT TO ADD DYNAMICALLY
     val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
+//    var costMap: HashMap[String, Double] = new HashMap()
+//    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._2).count()))
 
     val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
       case Some(value) => value
@@ -116,91 +106,20 @@ object MainTester {
     val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Will extract statements that start with AS or as
     var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statements and values all the possible tabs for join
     tableIdentifier.foreach( x => {
-
       rgxAS.findAllIn(x._2).matchData.foreach(
 
         m => fullMap.get(m.group(1)) match {
           case None => fullMap.update(m.group(1), Array(x._1))  //In case the element does not exist initialize the array
           case Some(value) => fullMap.update(m.group(1), value :+ x._1) //Otherwise append to the list the new element
         }
-
       )
     })
-//
-//    /*
-//      For Q2
-//      Tabs Analysis:
-//       -  tab0 -> As X -> GraduateStudent ->    Cost: 1379623
-//       -  tab1 -> As Y -> University  ->        Cost: 724685
-//       -  tab2 -> As Z -> Department  ->        Cost: 309815
-//       -  tab3 -> AS X, AS Z -> memberOf ->     Cost: 5580609
-//       -  tab4 -> AS Z, AS Y -> suborganOf->    Cost: 160140
-//       -  tab5 -> AS X, AS Y -> undergraDegree->Cost: 1619476
-//     */
-//
-//    //    WHERE tab4.Z=tab2.Z AND tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab3.Z=tab4.Z AND tab5.X=tab0.X AND tab0.X=tab3.X
-//    //    We essentially want to find the Hamiltonial path  https://www.hackerearth.com/practice/algorithms/graphs/hamiltonian-path/tutorial/
-//
-//    //    When there are N nodes, there are N - 1 directed edges that can lead from it (going to every other node)
-//    //  https://stackoverflow.com/questions/5058406/what-is-the-maximum-number-of-edges-in-a-directed-graph-with-n-nodes?fbclid=IwAR0EePHHzvtL1b0XtckIbjjaXhGaYG7HEgyNDEd5EMF34dKdIv9Oiz_zYok
-//    //  PROOF: https://www.quora.com/How-do-I-prove-that-the-minimum-number-of-edges-in-a-connected-graph-with-n-vertices-is-n-1
-//
-//    /*
-////    Q2 data
-////    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
-////
-////    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab3", "tab5"), "Y"-> Array("tab1","tab4", "tab5"), "Z"->Array("tab2","tab3","tab4"))
-//
-////    Q4 Data
-////    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140)
-////
-////    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab1", "tab2", "tab3", "tab4"), "Y1" -> Array("tab2"), "Y2" -> Array("tab3"), "Y3" -> Array("tab4"))
-//*/
-//
-//    //TODO fullmap and costmap the most important here
-//
-//    var bestComb : List[(String, Double)] = Nil // A list to preserve the best combinations
-//
-//    //First iterate over the Hashmap (key,values). Values is a list that contains all the available tables between them
-//    //We are certain that there are no joins where only one table of a specific key exists
-//    for (dictIter <- fullMap; if dictIter._2.length > 1 ){
-////      println("\n\nFor the key " + dictIter._1)
-//
-//      var tempComb : List[(String, Double)] = Nil
-//      for(innerList <- dictIter._2.indices){  //  Iterate over the list elements. innerList is an index value
-////        println("Iterate over list elements " +dictIter._2(innerList))
-//        for(remElem <- innerList+1 until dictIter._2.length){   // Go from the next index to the end of the table to track all combinations
-////          println("Remaining elements " +dictIter._2(remElem))
-//
-//          val tempProd: Double = costMap(dictIter._2(innerList)) * costMap(dictIter._2(remElem))  // Find the cost of join between two arrays, by calculating the product
-////          println("\n\nCost of element "+ dictIter._2(innerList) +" is "+costMap(dictIter._2(innerList)))
-////          println("Cost of element "+ dictIter._2(remElem) +" is "+costMap(dictIter._2(remElem)))
-//          val tempTuple: (String, Double) = (dictIter._2(innerList)+"."+dictIter._1+"="+dictIter._2(remElem)+"."+dictIter._1, tempProd)  // Create a temporary tuple with the table name and the cost
-////          println("Temporary tuple", tempTuple)
-//          tempComb = tempTuple :: tempComb
-//        }
-//      }
-//
-////      println("List with all the combinations \t"+ tempComb)
-//      val sortedtempComb : List[(String, Double)]= tempComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
-//      //      println("List with SORTED the combinations \t"+ sortedtempComb)
-//
-//      for(bestElem <- 0 until dictIter._2.length - 1){ //Keep the N - 1 elements that we want from each case. NOTE N-1 from the initial list with the elements
-//        bestComb = sortedtempComb(bestElem) :: bestComb
-//      }
-//
-//    }
-//
-//    val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
-//    val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
-//    println("Final list with SORTED best combinations "+ finalWhereQuery)
 
-    val finalWhereQuery = QueryOptimizerLogic(fullMap, costMap)
-
+    val finalWhereQuery = QueryOptimizerLogic(fullMap, costMap) //Function that returns the optimized WHERE statement
     val finalQuery = finalSelectQuery + finalFromQuery + finalWhereQuery
-    newlineSplit(1) = finalQuery
-    val finalOutput = newlineSplit.mkString("\n") //Merge once again the initially split string, with the newline character
 
+    newlineSplit(1) = finalQuery  //Change only the final query
+    val finalOutput = newlineSplit.mkString("\n") //Merge once again the initially split string, with the newline character
 
     return finalOutput
   }
