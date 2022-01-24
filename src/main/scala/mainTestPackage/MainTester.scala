@@ -6,7 +6,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.SparkSession
 
 import scala.collection.mutable.HashMap
-import scala.util.control.Breaks._
 
 object MainTester {
 
@@ -16,17 +15,17 @@ object MainTester {
 
     val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split based on the newline character
 //    newlineSplit.foreach(println)
-    val partitions: Array[String] = newlineSplit(2).replaceFirst("partitions", "").trim.split(",")
-      .map(x=> "table"+x.replace("-", "_").replace("=", "_E_"))
+//    val partitions: Array[String] = newlineSplit(2).replaceFirst("partitions", "").trim.split(",")
+//      .map(x=> "table"+x.replace("-", "_").replace("=", "_E_"))
+//
+//    println("\n\nPartitions")
+//    partitions.foreach(println)
 
-    println("\n\nPartitions")
-    partitions.foreach(println)
 
-
-//    val query = "X SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X \nFROM \n(SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, \n(SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, \n(SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, \n(SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, \n(SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, \n(SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 \nWHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z"
-//    val query  = "X SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 \nFROM \n(SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#FullProfessor>') AS tab0, \n(SELECT s AS X FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, \n(SELECT s AS X, o AS Y1 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_) AS tab2, \n(SELECT s AS X, o AS Y2 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_) AS tab3, \n(SELECT s AS X, o AS Y3 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_) AS tab4 \nWHERE tab0.X=tab1.X AND tab1.X=tab2.X AND tab2.X=tab3.X AND tab3.X=tab4.X "
     val query = newlineSplit(1) //Essentially we want to modify just the query(2nd entry)
     println("Initial Query is \n"+query+"\n\n" )
+    val finalSelectQuery = StringUtils.substringBefore(query, "FROM")
+    println("SELETSTES "+finalSelectQuery)
 
     //Extracts contents of the query from the first FROM statement until the last WHERE STATEMENT
     var initQueryDiv : String = StringUtils.substringAfter(query, "FROM")
@@ -49,8 +48,10 @@ object MainTester {
     val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
       case Some(value) => value
     })).sortBy(_._2)    //Final desired table for the from statement
-
 //    finalTable.foreach(println)
+
+    val finalFromQuery: String = "FROM "+finalTable.map(x => x._1).mkString(", ")
+    println("FAOASDA"+ finalFromQuery)
 
     val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Will extract statements that start with AS or as
     var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statemets and values all the possible tabs for join
@@ -91,6 +92,7 @@ object MainTester {
     //  https://stackoverflow.com/questions/5058406/what-is-the-maximum-number-of-edges-in-a-directed-graph-with-n-nodes?fbclid=IwAR0EePHHzvtL1b0XtckIbjjaXhGaYG7HEgyNDEd5EMF34dKdIv9Oiz_zYok
     //  PROOF: https://www.quora.com/How-do-I-prove-that-the-minimum-number-of-edges-in-a-connected-graph-with-n-vertices-is-n-1
 
+    /*
 //    Q2 data
 //    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
 //
@@ -100,7 +102,7 @@ object MainTester {
 //    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140)
 //
 //    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab1", "tab2", "tab3", "tab4"), "Y1" -> Array("tab2"), "Y2" -> Array("tab3"), "Y3" -> Array("tab4"))
-
+*/
 
     var bestComb : List[(String, Double)] = Nil // A list to preserve the best combinations
 
@@ -138,7 +140,15 @@ object MainTester {
     //    println("Final list with best combinations "+ bestComb)
     //    val sortedBestComb = bestComb.sortBy(_._2)
     val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
-    println("Final list with SORTED best combinations "+ sortedBestComb)
+    val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ")
+    println("Final list with SORTED best combinations "+ finalWhereQuery)
+
+    val finalQuery = finalSelectQuery + finalFromQuery + finalWhereQuery
+    newlineSplit(1) = finalQuery
+    val finalOutput = newlineSplit.mkString("\n")
+
+    println("\n\n")
+    println(finalOutput)
   }
 
   def main(args: Array[String]): Unit = {
