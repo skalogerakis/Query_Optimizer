@@ -10,11 +10,22 @@ import scala.util.control.Breaks._
 
 object MainTester {
 
-  def QueryOptimizer() : Unit = {
+  def QueryOptimizer(inputQuery: String) : Unit = {
+
+    println(inputQuery)
+
+    val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split based on the newline character
+//    newlineSplit.foreach(println)
+    val partitions: Array[String] = newlineSplit(2).replaceFirst("partitions", "").trim.split(",")
+      .map(x=> "table"+x.replace("-", "_").replace("=", "_E_"))
+
+    println("\n\nPartitions")
+    partitions.foreach(println)
 
 
-    val query = "X SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X \nFROM \n(SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, \n(SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, \n(SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, \n(SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, \n(SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, \n(SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 \nWHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z"
+//    val query = "X SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X \nFROM \n(SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, \n(SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, \n(SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, \n(SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, \n(SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, \n(SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 \nWHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z"
 //    val query  = "X SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 \nFROM \n(SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#FullProfessor>') AS tab0, \n(SELECT s AS X FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, \n(SELECT s AS X, o AS Y1 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_) AS tab2, \n(SELECT s AS X, o AS Y2 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_) AS tab3, \n(SELECT s AS X, o AS Y3 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_) AS tab4 \nWHERE tab0.X=tab1.X AND tab1.X=tab2.X AND tab2.X=tab3.X AND tab3.X=tab4.X "
+    val query = newlineSplit(1) //Essentially we want to modify just the query(2nd entry)
     println("Initial Query is \n"+query+"\n\n" )
 
     //Extracts contents of the query from the first FROM statement until the last WHERE STATEMENT
@@ -24,11 +35,22 @@ object MainTester {
 
     //Regex to split string by commas that is not included inside the parentheses
     val tabSplitter: Array[String] = initQueryDiv.split(",\\s*(?![^()]*\\))")
+    println("\n\nSplit the tabs based on commas")
     tabSplitter.foreach(println)
 
-    // Structure that contains an Array[(tab name, AS statements ,whole from statatement)]
-    val tableIdentifier: Array[(String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim,  StringUtils.substringBetween(x, "SELECT", "FROM"), x))
-    tableIdentifier.foreach(println)
+    // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statatement)]
+    val tableIdentifier: Array[(String, String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  StringUtils.substringAfter(x, "FROM").trim.split(" ")(0) ,x))
+    println("\n\nStructure with tabs on format Array[(tab name, AS statements, full table name ,whole from statatement)]")
+//    tableIdentifier.foreach(println)
+
+    //TODO ADD THAT DYNAMICALLY
+    val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
+
+    val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
+      case Some(value) => value
+    })).sortBy(_._2)    //Final desired table for the from statement
+
+//    finalTable.foreach(println)
 
     val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Will extract statements that start with AS or as
     var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statemets and values all the possible tabs for join
@@ -70,7 +92,7 @@ object MainTester {
     //  PROOF: https://www.quora.com/How-do-I-prove-that-the-minimum-number-of-edges-in-a-connected-graph-with-n-vertices-is-n-1
 
 //    Q2 data
-    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
+//    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
 //
 //    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab3", "tab5"), "Y"-> Array("tab1","tab4", "tab5"), "Z"->Array("tab2","tab3","tab4"))
 
@@ -85,7 +107,7 @@ object MainTester {
     //First iterate over the Hashmap (key,values). Values is a list that contains all the available tables between them
     //We are certain that there are no joins where only one table of a specific key exists
     for (dictIter <- fullMap; if dictIter._2.length > 1 ){
-      println("\n\nFor the key " + dictIter._1)
+//      println("\n\nFor the key " + dictIter._1)
 
       var tempComb : List[(String, Double)] = Nil
       for(innerList <- dictIter._2.indices){  //  Iterate over the list elements. innerList is an index value
@@ -102,7 +124,7 @@ object MainTester {
         }
       }
 
-      println("List with all the combinations \t"+ tempComb)
+//      println("List with all the combinations \t"+ tempComb)
       val sortedtempComb : List[(String, Double)]= tempComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
       //      println("List with SORTED the combinations \t"+ sortedtempComb)
 
@@ -121,7 +143,8 @@ object MainTester {
 
   def main(args: Array[String]): Unit = {
 
-    QueryOptimizer()
+    val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
+    QueryOptimizer(inputQuery)
   }
 
 
