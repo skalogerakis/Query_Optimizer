@@ -9,52 +9,34 @@ import scala.collection.mutable.HashMap
 
 object MainTester {
 
-  def QueryOptimizer(inputQuery: String) : Unit = {
-
-    println(inputQuery)
+  def QueryOptimizer(inputQuery: String) : String = {
 
     val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split based on the newline character
-//    newlineSplit.foreach(println)
-//    val partitions: Array[String] = newlineSplit(2).replaceFirst("partitions", "").trim.split(",")
-//      .map(x=> "table"+x.replace("-", "_").replace("=", "_E_"))
-//
-//    println("\n\nPartitions")
-//    partitions.foreach(println)
 
-
-    val query = newlineSplit(1) //Essentially we want to modify just the query(2nd entry)
-    println("Initial Query is \n"+query+"\n\n" )
-    val finalSelectQuery = StringUtils.substringBefore(query, "FROM")
-    println("SELETSTES "+finalSelectQuery)
+    val query = newlineSplit(1) //Essentially we want to modify just the query(2nd entry), while the rest remain the same
+    val finalSelectQuery = StringUtils.substringBefore(query, "FROM") // Select statement will not change in the output
 
     //Extracts contents of the query from the first FROM statement until the last WHERE STATEMENT
     var initQueryDiv : String = StringUtils.substringAfter(query, "FROM")
     initQueryDiv = StringUtils.substringBeforeLast(initQueryDiv, "WHERE").replaceAll("\n", " ").trim
-    println("\n\nAfter clearing "+ initQueryDiv+"\n\n")
 
-    //Regex to split string by commas that is not included inside the parentheses
+    //Regex to split string by commas that is not included inside the parentheses to get all the different tabs
     val tabSplitter: Array[String] = initQueryDiv.split(",\\s*(?![^()]*\\))")
-    println("\n\nSplit the tabs based on commas")
-    tabSplitter.foreach(println)
 
-    // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statatement)]
+    // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statement)]
     val tableIdentifier: Array[(String, String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  StringUtils.substringAfter(x, "FROM").trim.split(" ")(0) ,x))
-    println("\n\nStructure with tabs on format Array[(tab name, AS statements, full table name ,whole from statatement)]")
-//    tableIdentifier.foreach(println)
 
     //TODO ADD THAT DYNAMICALLY
     val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
 
     val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
       case Some(value) => value
-    })).sortBy(_._2)    //Final desired table for the from statement
-//    finalTable.foreach(println)
+    })).sortBy(_._2)    //Final desired table for the from statement after sorting by the table cost
 
-    val finalFromQuery: String = "FROM "+finalTable.map(x => x._1).mkString(", ")
-    println("FAOASDA"+ finalFromQuery)
+    val finalFromQuery: String = "FROM "+finalTable.map(x => x._1).mkString(", ") //The final FROM part of the query
 
     val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Will extract statements that start with AS or as
-    var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statemets and values all the possible tabs for join
+    var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statements and values all the possible tabs for join
     tableIdentifier.foreach( x => {
 
       rgxAS.findAllIn(x._2).matchData.foreach(
@@ -66,13 +48,6 @@ object MainTester {
 
       )
     })
-
-//    for (dictIter <- fullMap){
-//      println("\n\nFor the key " + dictIter._1)
-//      for (iter <- dictIter._2){
-//        println("Val "+ iter)
-//      }
-//    }
 
     /*
       For Q2
@@ -140,21 +115,23 @@ object MainTester {
     //    println("Final list with best combinations "+ bestComb)
     //    val sortedBestComb = bestComb.sortBy(_._2)
     val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
-    val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ")
+    val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
     println("Final list with SORTED best combinations "+ finalWhereQuery)
 
     val finalQuery = finalSelectQuery + finalFromQuery + finalWhereQuery
     newlineSplit(1) = finalQuery
-    val finalOutput = newlineSplit.mkString("\n")
+    val finalOutput = newlineSplit.mkString("\n") //Merge once again the initially split string, with the newline character
 
-    println("\n\n")
-    println(finalOutput)
+
+    return finalOutput
   }
 
   def main(args: Array[String]): Unit = {
 
     val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
-    QueryOptimizer(inputQuery)
+    println("Initial input is: \n\n"+inputQuery)
+    val finOutput = QueryOptimizer(inputQuery)
+    println("\n\nOutput is: \n\n"+finOutput)
   }
 
 
