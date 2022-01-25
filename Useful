@@ -1,0 +1,11 @@
+    Q2 data
+    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
+    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab3", "tab5"), "Y"-> Array("tab1","tab4", "tab5"), "Z"->Array("tab2","tab3","tab4"))
+
+    Q4 Data
+    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140)
+    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab1", "tab2", "tab3", "tab4"), "Y1" -> Array("tab2"), "Y2" -> Array("tab3"), "Y3" -> Array("tab4"))
+
+
+//OPTIMAL FOR Q2
+//    WHERE tab4.Z=tab2.Z AND tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab3.Z=tab4.Z AND tab5.X=tab0.X AND tab0.X=tab3.X

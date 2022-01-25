@@ -1,12 +1,13 @@
 package mainTestPackage
 
 import org.apache.commons.lang.StringUtils
-import org.apache.log4j.{Level, LogManager}
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.SparkSession
-
-import scala.collection.mutable
+//import org.apache.log4j.{Level, LogManager}
+//import org.apache.spark.sql.functions._
+//import org.apache.spark.sql.SparkSession
+//
+//import scala.collection.mutable
 import scala.collection.mutable.HashMap
+
 
 object MainTester {
 
@@ -18,56 +19,47 @@ object MainTester {
    */
   def QueryOptimizerLogic(fullMap: HashMap[String, Array[String]], costMap: HashMap[String, Double]): String ={
 
-    //    WHERE tab4.Z=tab2.Z AND tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab3.Z=tab4.Z AND tab5.X=tab0.X AND tab0.X=tab3.X
 
-    //    We essentially want to find the Hamiltonial path  https://www.hackerearth.com/practice/algorithms/graphs/hamiltonian-path/tutorial/
-    //    When there are N nodes, there are N - 1 directed edges that can lead from it (going to every other node)
-    //  https://stackoverflow.com/questions/5058406/what-is-the-maximum-number-of-edges-in-a-directed-graph-with-n-nodes?fbclid=IwAR0EePHHzvtL1b0XtckIbjjaXhGaYG7HEgyNDEd5EMF34dKdIv9Oiz_zYok
-    //  PROOF: https://www.quora.com/How-do-I-prove-that-the-minimum-number-of-edges-in-a-connected-graph-with-n-vertices-is-n-1
-
-    /*
-//    Q2 data
-//    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
-//    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab3", "tab5"), "Y"-> Array("tab1","tab4", "tab5"), "Z"->Array("tab2","tab3","tab4"))
-
-//    Q4 Data
-//    var costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140)
-//    var fullMap: HashMap[String, Array[String]] = HashMap("X"-> Array("tab0", "tab1", "tab2", "tab3", "tab4"), "Y1" -> Array("tab2"), "Y2" -> Array("tab3"), "Y3" -> Array("tab4"))
-*/
+    /**
+     * We could consider this problems as a graph problem, with the tables being the vertices and their joins as edges.
+     * Essentially we want to find the Hamiltonian path https://www.hackerearth.com/practice/algorithms/graphs/hamiltonian-path/tutorial/
+     * We also know that when there are N nodes, the minimum number of edges in a connected graph are n-1.
+     * PROOF: https://www.quora.com/How-do-I-prove-that-the-minimum-number-of-edges-in-a-connected-graph-with-n-vertices-is-n-1
+     * The final goal to achieve the best joins possible(with the least cost).
+     */
 
     var bestComb : List[(String, Double)] = Nil // A list to preserve the best combinations
 
     //First iterate over the Hashmap (key,values). Values is a list that contains all the available tables between them
     //We are certain that there are no joins where only one table of a specific key exists
     for (dictIter <- fullMap; if dictIter._2.length > 1 ){
-      //      println("\n\nFor the key " + dictIter._1)
 
-      var tempComb : List[(String, Double)] = Nil
+      var tempKeyComb : List[(String, Double)] = Nil  //List with all the combinations for table joins in each key
+
       for(innerList <- dictIter._2.indices){  //  Iterate over the list elements. innerList is an index value
-        //        println("Iterate over list elements " +dictIter._2(innerList))
-        for(remElem <- innerList+1 until dictIter._2.length){   // Go from the next index to the end of the table to track all combinations
-          //          println("Remaining elements " +dictIter._2(remElem))
 
+        for(remElem <- innerList+1 until dictIter._2.length){   // Go from the next index to the end of the table to track all combinations
           val tempProd: Double = costMap(dictIter._2(innerList)) * costMap(dictIter._2(remElem))  // Find the cost of join between two arrays, by calculating the product
-          //          println("\n\nCost of element "+ dictIter._2(innerList) +" is "+costMap(dictIter._2(innerList)))
-          //          println("Cost of element "+ dictIter._2(remElem) +" is "+costMap(dictIter._2(remElem)))
-          val tempTuple: (String, Double) = (dictIter._2(innerList)+"."+dictIter._1+"="+dictIter._2(remElem)+"."+dictIter._1, tempProd)  // Create a temporary tuple with the table name and the cost
-          //          println("Temporary tuple", tempTuple)
-          tempComb = tempTuple :: tempComb
+          val tempTuple: (String, Double) = (dictIter._2(innerList)+"."+dictIter._1+"="+dictIter._2(remElem)+"."+dictIter._1, tempProd)  // Create a temporary tuple with the where join statement and the cost
+
+          tempKeyComb = tempTuple :: tempKeyComb
         }
       }
 
-      val sortedtempComb : List[(String, Double)]= tempComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
-      //      println("List with SORTED the combinations \t"+ sortedtempComb)
+      val sortedtempComb : List[(String, Double)]= tempKeyComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
 
-      for(bestElem <- 0 until dictIter._2.length - 1){ //Keep the N - 1 elements that we want from each case. NOTE N-1 from the initial list with the elements
+      /*
+          Keep the N - 1 elements that we want from each case, as stated in the beginning. NOTE N-1 from the initial list with the elements
+       */
+
+      for(bestElem <- 0 until dictIter._2.length - 1){
         bestComb = sortedtempComb(bestElem) :: bestComb
       }
 
     }
 
     val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
-    val finalWhereQuery = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
+    val finalWhereQuery: String = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
 
     //println("Final WHERE STATEMENT "+ finalWhereQuery) //WHERE sanity check
     finalWhereQuery
@@ -75,10 +67,10 @@ object MainTester {
 
   def QueryOptimizer(inputQuery: String) : String = {
 
-    val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split based on the newline character
+    val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split the input based on the newline character
 
-    val query = newlineSplit(1) //Essentially we want to modify just the query(2nd entry), while the rest remain the same
-    val finalSelectQuery = StringUtils.substringBefore(query, "FROM") // Select statement will not change in the output
+    val query: String = newlineSplit(1) //Essentially we want to modify just the query(2nd entry), while the rest remain the same
+    val _SelectQuery: String = StringUtils.substringBefore(query, "FROM") // Select statement will not change in the output
 
     //Extracts contents of the query from the first FROM statement until the last WHERE STATEMENT
     var initQueryDiv : String = StringUtils.substringAfter(query, "FROM")
@@ -90,21 +82,21 @@ object MainTester {
     // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statement)]
     val tableIdentifier: Array[(String, String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  StringUtils.substringAfter(x, "FROM").trim.split(" ")(0) ,x))
 
-//    tableIdentifier.foreach(println)
-
+    //costMap is a Hashmap containing the tab name and the tuple count.
     //TODO COMMENT THAT TO ADD DYNAMICALLY
     val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
 //    var costMap: HashMap[String, Double] = new HashMap()
-//    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._2).count()))
+//    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._3).count()))
 
     val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
       case Some(value) => value
-    })).sortBy(_._2)    //Final desired table for the from statement after sorting by the table cost
+    })).sortBy(_._2)    //Final sorted statements for the FROM statement
 
-    val finalFromQuery: String = "FROM "+finalTable.map(x => x._1).mkString(", ") //The final FROM part of the query
+    val _FromQuery: String = "FROM "+finalTable.map(x => x._1).mkString(", ") //The final FROM part of the query
 
-    val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Will extract statements that start with AS or as
+    val rgxAS = "AS\\s((\\w+))|as\\s(\\w+)".r //Regex to extract statements that start with AS or as
     var fullMap: HashMap[String, Array[String]] = new HashMap() //A hashmap with keys the statements stored in AS statements and values all the possible tabs for join
+
     tableIdentifier.foreach( x => {
       rgxAS.findAllIn(x._2).matchData.foreach(
 
@@ -115,11 +107,11 @@ object MainTester {
       )
     })
 
-    val finalWhereQuery = QueryOptimizerLogic(fullMap, costMap) //Function that returns the optimized WHERE statement
-    val finalQuery = finalSelectQuery + finalFromQuery + finalWhereQuery
+    val _WhereQuery: String = QueryOptimizerLogic(fullMap, costMap) //Function that returns the optimized WHERE statement
+    val _Query: String = _SelectQuery + _FromQuery + _WhereQuery
 
-    newlineSplit(1) = finalQuery  //Change only the final query
-    val finalOutput = newlineSplit.mkString("\n") //Merge once again the initially split string, with the newline character
+    newlineSplit(1) = _Query  //Change only the final query
+    val finalOutput: String = newlineSplit.mkString("\n") //Merge once again the initially split string, with the newline character
 
     return finalOutput
   }
