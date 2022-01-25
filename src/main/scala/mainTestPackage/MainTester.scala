@@ -65,7 +65,7 @@ object MainTester {
     finalWhereQuery
   }
 
-  def QueryOptimizer(inputQuery: String) : String = {
+  def QueryOptimizer(inputQuery: String, fileStatisticsPath: String) : String = {
 
     val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split the input based on the newline character
 
@@ -80,13 +80,32 @@ object MainTester {
     val tabSplitter: Array[String] = initQueryDiv.split(",\\s*(?![^()]*\\))")
 
     // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statement)]
-    val tableIdentifier: Array[(String, String, String, String)] = tabSplitter.map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  StringUtils.substringAfter(x, "FROM").trim.split(" ")(0) ,x))
+    val tableIdentifier: Array[(String, String, String, String)] = tabSplitter
+      .map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  if (StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).endsWith(")")) StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).dropRight(1) else StringUtils.substringAfter(x, "FROM").trim.split(" ")(0),x))
+
 
     //costMap is a Hashmap containing the tab name and the tuple count.
-    //TODO COMMENT THAT TO ADD DYNAMICALLY
-    val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
-//    var costMap: HashMap[String, Double] = new HashMap()
-//    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._3).count()))
+    //STATIC IMPLEMENTATION
+    //    val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
+
+    //    Implementation using table name and count
+    //    var costMap: HashMap[String, Double] = new HashMap()
+    //    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._3).count()))
+
+
+    //  Implementation reading statistics from file
+    val inputMap:Map[String,Double] = scala.io.Source.fromFile(fileStatisticsPath).getLines.map {
+      l =>
+        l.split(',') match {
+          case Array(k, v, _*) => "table" + k.replace("-", "_").replace("=", "_E_").trim -> v.toDouble
+          case _ => "-1.0" -> -1.0    //this is to get when there is an empty line that causes an exception otherwise
+        }
+    }.toMap.filter(x=> x._2 != -1.0 )   //Keep only the valid entries
+
+
+    var costMap: HashMap[String, Double] = new HashMap()
+    tableIdentifier.map(n=> costMap.update(n._1, inputMap(n._3)))  //TODO maybe do something special when the stat does not exist from the file
+
 
     val finalTable: Array[(String,Double)] = tableIdentifier.map(t => (t._4, costMap.get(t._1) match {
       case Some(value) => value
@@ -120,7 +139,9 @@ object MainTester {
 
     val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
     println("Initial input is: \n\n"+inputQuery)
-    val finOutput = QueryOptimizer(inputQuery)
+
+    val fileStatisticsPath = "/home/skalogerakis/Documents/Workspace/CS460_Bonus/Statistics.txt"
+    val finOutput = QueryOptimizer(inputQuery, fileStatisticsPath)
     println("\n\nOutput is: \n\n"+finOutput)
   }
 
