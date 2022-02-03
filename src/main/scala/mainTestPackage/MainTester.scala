@@ -29,7 +29,6 @@ object MainTester {
      */
 
     var bestComb : List[(String, Double, String, String)] = Nil // A list to preserve the best combinations
-    var bestCombTables : List[String] = Nil // A list to preserve the best combinations
 
 
     //First iterate over the Hashmap (key,values). Values is a list that contains all the available tables between them
@@ -48,12 +47,12 @@ object MainTester {
         }
       }
 
+      var bestCombTables : List[String] = Nil // A list to preserve the best combinations
       val sortedtempComb : List[(String, Double, String, String)]= tempKeyComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
 
       /*
           Keep the N - 1 elements that we want from each case, as stated in the beginning. NOTE N-1 from the initial list with the elements
        */
-
 
       var elemIter = 0
       var counter = 0
@@ -66,7 +65,9 @@ object MainTester {
 
           if (!bestCombTables.contains(sortedtempComb(counter)._3)){ //If an element does not exist in the tables already joined add it
             bestCombTables = sortedtempComb(counter)._3 :: bestCombTables
-          }else if(!bestCombTables.contains(sortedtempComb(counter)._4)){
+          }
+
+          if(!bestCombTables.contains(sortedtempComb(counter)._4)){
             bestCombTables = sortedtempComb(counter)._4 :: bestCombTables
           }
 
@@ -77,7 +78,7 @@ object MainTester {
       }
 
     }
-
+    
     val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
     val finalWhereQuery: String = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
 
