@@ -28,32 +28,52 @@ object MainTester {
      * The final goal to achieve the best joins possible(with the least cost).
      */
 
-    var bestComb : List[(String, Double)] = Nil // A list to preserve the best combinations
+    var bestComb : List[(String, Double, String, String)] = Nil // A list to preserve the best combinations
+    var bestCombTables : List[String] = Nil // A list to preserve the best combinations
+
 
     //First iterate over the Hashmap (key,values). Values is a list that contains all the available tables between them
     //We are certain that there are no joins where only one table of a specific key exists
     for (dictIter <- fullMap; if dictIter._2.length > 1 ){
 
-      var tempKeyComb : List[(String, Double)] = Nil  //List with all the combinations for table joins in each key
+      var tempKeyComb : List[(String, Double, String, String)] = Nil  //List with all the combinations for table joins in each key
 
       for(innerList <- dictIter._2.indices){  //  Iterate over the list elements. innerList is an index value
 
         for(remElem <- innerList+1 until dictIter._2.length){   // Go from the next index to the end of the table to track all combinations
           val tempProd: Double = costMap(dictIter._2(innerList)) * costMap(dictIter._2(remElem))  // Find the cost of join between two arrays, by calculating the product
-          val tempTuple: (String, Double) = (dictIter._2(innerList)+"."+dictIter._1+"="+dictIter._2(remElem)+"."+dictIter._1, tempProd)  // Create a temporary tuple with the where join statement and the cost
+          val tempTuple: (String, Double, String, String) = (dictIter._2(innerList)+"."+dictIter._1+"="+dictIter._2(remElem)+"."+dictIter._1, tempProd, dictIter._2(innerList), dictIter._2(remElem))  // Create a temporary tuple with the where join statement and the cost
 
           tempKeyComb = tempTuple :: tempKeyComb
         }
       }
 
-      val sortedtempComb : List[(String, Double)]= tempKeyComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
+      val sortedtempComb : List[(String, Double, String, String)]= tempKeyComb.sortBy(_._2)  //Sort everything by the join cost(ascending)
 
       /*
           Keep the N - 1 elements that we want from each case, as stated in the beginning. NOTE N-1 from the initial list with the elements
        */
 
-      for(bestElem <- 0 until dictIter._2.length - 1){
-        bestComb = sortedtempComb(bestElem) :: bestComb
+
+      var elemIter = 0
+      var counter = 0
+      while(elemIter < dictIter._2.length - 1){
+
+        //If there is an element that already joins two tables that are joined move to the next element
+        if(bestCombTables.contains(sortedtempComb(counter)._3) && bestCombTables.contains(sortedtempComb(counter)._4)){
+          counter += 1
+        }else{
+
+          if (!bestCombTables.contains(sortedtempComb(counter)._3)){ //If an element does not exist in the tables already joined add it
+            bestCombTables = sortedtempComb(counter)._3 :: bestCombTables
+          }else if(!bestCombTables.contains(sortedtempComb(counter)._4)){
+            bestCombTables = sortedtempComb(counter)._4 :: bestCombTables
+          }
+
+          bestComb = sortedtempComb(counter) :: bestComb //If we reach here it means that at least one of the tables in the join is new
+          elemIter += 1
+          counter += 1
+        }
       }
 
     }
@@ -86,14 +106,6 @@ object MainTester {
       .map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  if (StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).endsWith(")")) StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).dropRight(1) else StringUtils.substringAfter(x, "FROM").trim.split(" ")(0),x))
 
     //costMap is a Hashmap containing the tab name and the tuple count.
-    //STATIC IMPLEMENTATION
-    //    val costMap: HashMap[String, Double] = HashMap("tab0" -> 1379623, "tab1" -> 724685, "tab2" -> 309815, "tab3" -> 5580609, "tab4" -> 160140, "tab5" -> 1619476)
-
-    //    Implementation using table name and count
-    //    var costMap: HashMap[String, Double] = new HashMap()
-    //    tableIdentifier.foreach(n => costMap.update(n._1, loadDataset(n._3).count()))
-
-
     //  Implementation reading statistics from file
     val inputMap:Map[String,Double] = scala.io.Source.fromFile(fileStatisticsPath).getLines.map {
       l =>
@@ -138,11 +150,12 @@ object MainTester {
 
   def main(args: Array[String]): Unit = {
 
-    //val inputQuery = ">>>>> Q14.txt\nX SELECT tab0.X AS X FROM (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent>') AS tab0\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_\nTP 1"
-    val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
+//    val inputQuery = ">>>>> Q14.txt\nX SELECT tab0.X AS X FROM (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent>') AS tab0\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_\nTP 1"
+//    val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
+    val inputQuery = ">>>>> Q4.txt\nX SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 FROM (SELECT s AS X FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#FullProfessor>') AS tab0, (SELECT s AS X FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, (SELECT s AS X, o AS Y1 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_) AS tab2, (SELECT s AS X, o AS Y2 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_) AS tab3, (SELECT s AS X, o AS Y3 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_) AS tab4 WHERE tab0.X=tab1.X AND tab1.X=tab2.X AND tab2.X=tab3.X AND tab3.X=tab4.X \npartitions 00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_\nTP 5"
     println("Initial input is: \n\n"+inputQuery)
 
-    val fileStatisticsPath = "/home/skalogerakis/Documents/Workspace/CS460_Bonus/Statistics.txt"
+    val fileStatisticsPath = "/home/skalogerakis/Documents/Workspace/CS460_Bonus/Stat.txt"
     val finOutput = QueryOptimizer(inputQuery, fileStatisticsPath)
     println("\n\nOutput is: \n\n"+finOutput)
   }
