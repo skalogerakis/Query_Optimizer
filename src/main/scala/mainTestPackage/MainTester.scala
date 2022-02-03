@@ -69,6 +69,8 @@ object MainTester {
 
     val newlineSplit: Array[String] = inputQuery.split("\\r?\\n")    //Split the input based on the newline character
 
+    if (newlineSplit(newlineSplit.length - 1).split(" ")(1).toInt == 1 ) return inputQuery
+
     val query: String = newlineSplit(1) //Essentially we want to modify just the query(2nd entry), while the rest remain the same
     val _SelectQuery: String = StringUtils.substringBefore(query, "FROM") // Select statement will not change in the output
 
@@ -82,7 +84,6 @@ object MainTester {
     // Structure that contains an Array[(tab name, AS statements, full table name ,whole from statement)]
     val tableIdentifier: Array[(String, String, String, String)] = tabSplitter
       .map(x=>(StringUtils.substringAfterLast(x, "AS").trim, StringUtils.substringBetween(x, "SELECT", "FROM"),  if (StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).endsWith(")")) StringUtils.substringAfter(x, "FROM").trim.split(" ")(0).dropRight(1) else StringUtils.substringAfter(x, "FROM").trim.split(" ")(0),x))
-
 
     //costMap is a Hashmap containing the tab name and the tuple count.
     //STATIC IMPLEMENTATION
@@ -100,7 +101,7 @@ object MainTester {
           case Array(k, v, _*) => "table" + k.replace("-", "_").replace("=", "_E_").trim -> v.toDouble
           case _ => "-1.0" -> -1.0    //this is to get when there is an empty line that causes an exception otherwise
         }
-    }.toMap.filter(x=> x._2 != -1.0 )   //Keep only the valid entries
+    }.toMap.filter(x=> x._2 != -1.0 )  //Keep only the valid entries
 
 
     var costMap: HashMap[String, Double] = new HashMap()
@@ -137,6 +138,7 @@ object MainTester {
 
   def main(args: Array[String]): Unit = {
 
+    //val inputQuery = ">>>>> Q14.txt\nX SELECT tab0.X AS X FROM (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent>') AS tab0\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_\nTP 1"
     val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
     println("Initial input is: \n\n"+inputQuery)
 
