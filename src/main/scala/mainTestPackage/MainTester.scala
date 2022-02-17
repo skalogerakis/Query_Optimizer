@@ -1,6 +1,7 @@
 package mainTestPackage
 
 import org.apache.commons.lang.StringUtils
+import org.apache.spark.sql.SparkSession
 //import org.apache.log4j.{Level, LogManager}
 //import org.apache.spark.sql.functions._
 //import org.apache.spark.sql.SparkSession
@@ -78,7 +79,7 @@ object MainTester {
       }
 
     }
-    
+
     val sortedBestComb : List[String] = bestComb.sortBy(_._2).map(x => x._1) //Sort once again to get the final ordering, and keep the only the combinations
     val finalWhereQuery: String = " WHERE " +sortedBestComb.mkString(" AND ") //Final WHERE STATEMENT OPTIMIZED
 
@@ -153,12 +154,33 @@ object MainTester {
 
 //    val inputQuery = ">>>>> Q14.txt\nX SELECT tab0.X AS X FROM (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent>') AS tab0\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_\nTP 1"
 //    val inputQuery = ">>>>> Q2.txt\nX SELECT tab5.Y AS Y,tab2.Z AS Z,tab3.X AS X FROM (SELECT s AS Y FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#University>') AS tab1, (SELECT s AS Z, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_) AS tab4, (SELECT s AS X, o AS Y FROM table00001__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_) AS tab5, (SELECT s AS X FROM table00002__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#GraduateStudent>') AS tab0, (SELECT s AS X, o AS Z FROM table00004__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_) AS tab3, (SELECT s AS Z FROM table00004__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Department>') AS tab2 WHERE tab1.Y=tab4.Y AND tab4.Y=tab5.Y AND tab0.X=tab3.X AND tab3.X=tab5.X AND tab2.Z=tab3.Z AND tab3.Z=tab4.Z \npartitions 00002-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_undergraduatedegreefrom_,00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00004-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_memberof_,00001-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_suborganizationof_\nTP 6"
-    val inputQuery = ">>>>> Q4.txt\nX SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 FROM (SELECT s AS X FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#FullProfessor>') AS tab0, (SELECT s AS X FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, (SELECT s AS X, o AS Y1 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_) AS tab2, (SELECT s AS X, o AS Y2 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_) AS tab3, (SELECT s AS X, o AS Y3 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_) AS tab4 WHERE tab0.X=tab1.X AND tab1.X=tab2.X AND tab2.X=tab3.X AND tab3.X=tab4.X \npartitions 00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_\nTP 5"
-    println("Initial input is: \n\n"+inputQuery)
+//    val inputQuery = ">>>>> Q4.txt\nX SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 FROM (SELECT s AS X FROM table00001__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#FullProfessor>') AS tab0, (SELECT s AS X FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, (SELECT s AS X, o AS Y1 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_) AS tab2, (SELECT s AS X, o AS Y2 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_) AS tab3, (SELECT s AS X, o AS Y3 FROM table00001__3_E__http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_) AS tab4 WHERE tab0.X=tab1.X AND tab1.X=tab2.X AND tab2.X=tab3.X AND tab3.X=tab4.X \npartitions 00001-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_worksfor_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_name_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_emailaddress_,00001-_3=_http___swat_cse_lehigh_edu_onto_univ_bench_owl_telephone_\nTP 5"
 
-    val fileStatisticsPath = "/home/skalogerakis/Documents/Workspace/CS460_Bonus/Stat.txt"
-    val finOutput = QueryOptimizer(inputQuery, fileStatisticsPath)
-    println("\n\nOutput is: \n\n"+finOutput)
+//    TODO uncomment that
+//    val inputQuery = ">>>>> Q4.txt\nX SELECT tab4.X AS X,tab2.Y1 AS Y1,tab3.Y2 AS Y2,tab4.Y3 AS Y3 FROM (SELECT s AS X, o AS Y2 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_) AS tab3, (SELECT s AS X, o AS Y3 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_) AS tab4, (SELECT s AS X FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_ WHERE o == '<http://www.Department0.University0.edu>') AS tab1, (SELECT s AS X, o AS Y1 FROM table00003__3_E__http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_) AS tab2, (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#FullProfessor>') AS tab0 WHERE tab3.X=tab4.X AND tab1.X=tab4.X AND tab2.X=tab4.X AND tab0.X=tab4.X\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_,00003-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_,00003-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_,00003-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_,00003-_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_\nTP 5"
+//    println("Initial input is: \n\n"+inputQuery)
+//
+//    val fileStatisticsPath = "/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/statTables.txt"
+//    val finOutput = QueryOptimizer(inputQuery, fileStatisticsPath)
+//    println("\n\nOutput is: \n\n"+finOutput)
+
+    val sparkSession = SparkSession.builder().appName("Spark Query Optimizer").master("local[*]").getOrCreate()
+
+    //This hides too much log information and sets log level to error
+    sparkSession.sparkContext.setLogLevel("ERROR")
+
+    //Define using sql queries
+//    println(sparkSession.sql("select * from parquet.`/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_`").count())
+
+//    println(sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").count())
+
+    val emailCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").count()
+    val nameCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_").count()
+    val telephoneCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_").count()
+    val worksForCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_").count()
+    val typeCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_").count()
+
+    println("COUNT FOR -> EmailAddre:  " + emailCounter + ", Name: "+ nameCounter+  ", Telephone: "+ telephoneCounter+ ", worksFor: "+worksForCounter+", Type: "+ typeCounter)
   }
 
 
