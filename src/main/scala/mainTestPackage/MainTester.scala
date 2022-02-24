@@ -1,7 +1,7 @@
 package mainTestPackage
 
 import org.apache.commons.lang.StringUtils
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SparkSession, functions}
 //import org.apache.log4j.{Level, LogManager}
 //import org.apache.spark.sql.functions._
 //import org.apache.spark.sql.SparkSession
@@ -167,10 +167,8 @@ object MainTester {
     val sparkSession = SparkSession.builder()
       .appName("Spark Query Optimizer")
       .master("local[*]")
-      .config("spark.sql.cbo.enabled", "true")
+//      .config("spark.sql.cbo.enabled", "true")
       .config("spark.sql.statistics.histogram.enabled", "true")
-//
-//      .config("spark.sql.statistics.histogram.numBins", 10)
       .getOrCreate()
 
     //This hides too much log information and sets log level to error
@@ -181,48 +179,33 @@ object MainTester {
 
 //    println(sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").count())
 
-    val emailCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").cache()
-    val nameCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_").cache()
-    val telephoneCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_").cache()
-    val worksForCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_").cache()
-    val typeCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_").cache()
 
-    println("COUNT FOR -> EmailAddre:  " + emailCounter.count() + ", Name: "+ nameCounter.count()+  ", Telephone: "+ telephoneCounter.count()+ ", worksFor: "+worksForCounter.count()+", Type: "+ typeCounter.count())
 
+//    val emailCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").cache()
+//    val nameCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_").cache()
+//    val telephoneCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_").cache()
+//    val worksForCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_").cache()
+//    val typeCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_").cache()
+//
+//    println("COUNT FOR -> EmailAddre:  " + emailCounter.count() + ", Name: "+ nameCounter.count()+  ", Telephone: "+ telephoneCounter.count()+ ", worksFor: "+worksForCounter.count()+", Type: "+ typeCounter.count())
+//
 //    emailCounter.show(10,false)
 //    nameCounter.show(10,false)
 //    telephoneCounter.show(10,false)
 //    worksForCounter.show(10,false)
 //    typeCounter.show(10,false)
 
-    //TODO interesting approach using histogram method. However, spark does not support histograms with strings
-    import org.apache.spark.sql.catalyst.TableIdentifier
-    val sessionCatalog = sparkSession.sessionState.catalog
-
-    val tableName = "email"
-    val tableId = TableIdentifier(tableName)
-
-    sessionCatalog.dropTable(tableId, ignoreIfNotExists = true, purge = true)
-    nameCounter.write.saveAsTable("email")
 
 
+    import sparkSession.implicits._
 
-    val allCols = nameCounter.columns.mkString(",")
-    val analyzeTableSQL = s"ANALYZE TABLE $tableName COMPUTE STATISTICS FOR COLUMNS $allCols"
-//    val plan = sparkSession.sql(analyzeTableSQL).queryExecution.logical
 
-    import org.apache.spark.sql.execution.command.AnalyzeColumnCommand
-//    val cmd = plan.asInstanceOf[AnalyzeColumnCommand]
-//    println(cmd)
+    val df2 = Seq((0, 0.0, "d"), (1, 1.4, "a"),(1, 1.4, "b"), (1, 1.4, "z")).toDF("id", "p1", "p2")
 
-    sparkSession.sql(analyzeTableSQL)
-    val stats = sessionCatalog.getTableMetadata(tableId).stats.get
-    println(stats.simpleString)
+    df2.show()
+    df2.agg(functions.max($"p2"), functions.min($"p2")).show()
 
-//    sparkSession.sql(s"DESC EXTENDED $tableName id").show
 
-    val descExtSQL = s"DESC EXTENDED $tableName _2"
-    sparkSession.sql(descExtSQL).show(truncate = false)
 
   }
 
