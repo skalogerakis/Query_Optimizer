@@ -5,15 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d757eb01-8770-4ae2-bf54-090500029d0d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/SparkTest.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/azureSettings.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/google-java-format.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$$typecreator5$1.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -50,6 +44,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
@@ -83,7 +78,8 @@
       <option name="presentableId" value="Default" />
       <updated>1645530907631</updated>
       <workItem from="1645530911358" duration="777000" />
-      <workItem from="1645700251742" duration="1247000" />
+      <workItem from="1645700251742" duration="7521000" />
+      <workItem from="1645778738993" duration="10461000" />
     </task>
     <servers />
   </component>
@@ -100,5 +96,16 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="scala-line">
+          <url>file://$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala</url>
+          <line>211</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

@@ -1,7 +1,8 @@
 package mainTestPackage
 
 import org.apache.commons.lang.StringUtils
-import org.apache.spark.sql.{SparkSession, functions}
+import org.apache.spark.sql.functions.{col, column, countDistinct, hash, md5}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions}
 //import org.apache.log4j.{Level, LogManager}
 //import org.apache.spark.sql.functions._
 //import org.apache.spark.sql.SparkSession
@@ -150,6 +151,8 @@ object MainTester {
     return finalOutput
   }
 
+
+
   def main(args: Array[String]): Unit = {
 
 //    val inputQuery = ">>>>> Q14.txt\nX SELECT tab0.X AS X FROM (SELECT s AS X FROM table00003__3_E__http___www_w3_org_1999_02_22_rdf_syntax_ns_type_ WHERE o == '<http://swat.cse.lehigh.edu/onto/univ-bench.owl#UndergraduateStudent>') AS tab0\npartitions 00003-_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_\nTP 1"
@@ -169,6 +172,7 @@ object MainTester {
       .master("local[*]")
 //      .config("spark.sql.cbo.enabled", "true")
       .config("spark.sql.statistics.histogram.enabled", "true")
+      .config("spark.sql.statistics.histogram.numBins", 200)
       .getOrCreate()
 
     //This hides too much log information and sets log level to error
@@ -181,30 +185,64 @@ object MainTester {
 
 
 
-//    val emailCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").cache()
-//    val nameCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_").cache()
-//    val telephoneCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_").cache()
-//    val worksForCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_").cache()
-//    val typeCounter = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_").cache()
-//
-//    println("COUNT FOR -> EmailAddre:  " + emailCounter.count() + ", Name: "+ nameCounter.count()+  ", Telephone: "+ telephoneCounter.count()+ ", worksFor: "+worksForCounter.count()+", Type: "+ typeCounter.count())
-//
-//    emailCounter.show(10,false)
-//    nameCounter.show(10,false)
-//    telephoneCounter.show(10,false)
-//    worksForCounter.show(10,false)
-//    typeCounter.show(10,false)
+    val emailTab = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_emailaddress_").cache()
+    val nameTab = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_name_").cache()
+    val telephoneTab = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_telephone_").cache()
+    val worksForTab = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_lehigh_edu__zhp2_2004_0401_univ_bench_owl_worksfor_").cache()
+    val typeTab = sparkSession.read.parquet("/home/skalogerakis/Documents/Workspace/CS460_Bonus/Data/Query4/Query4_Partitions/_3=_http___www_w3_org_1999_02_22_rdf_syntax_ns_type_").cache()
+
+    println("COUNT FOR -> EmailAddre:  " + emailTab.count() + ", Name: "+ nameTab.count()+  ", Telephone: "+ telephoneTab.count()+ ", worksFor: "+worksForTab.count()+", Type: "+ typeTab.count())
+
+//    emailTab.show(10,false)
+    nameTab.show(10,false)
+    telephoneTab.show(10,false)
+    worksForTab.show(10,false)
+//    typeTab.show(10,false)
 
 
 
     import sparkSession.implicits._
 
+//    println("Distinct "+ nameTab.select("_2").distinct.count)
+//    nameTab.sort("_2").show(10)
+    val hashednameTab = nameTab.withColumn("hash", functions.hash($"_2")) //TODO also md5 function however returns hex
+    println("Distinct "+ hashednameTab.select("hash").distinct.count)
 
-    val df2 = Seq((0, 0.0, "d"), (1, 1.4, "a"),(1, 1.4, "b"), (1, 1.4, "z")).toDF("id", "p1", "p2")
+//    val histCol1 = hashednameTab.select(col("hash")).rdd.map(record => record.getInt(0)).countByValue()
+////    println(histCol1.foreach(println))
+////    println(histCol1)
+//
+//    val (ranges, counts) = hashednameTab.select(col("hash")).rdd.map(r => r.getInt(0)).histogram(2)
+//    println(ranges.mkString(" "))
+//    println(counts.mkString(" "))
+//    val histCol1 = RDD.map(record => record.col_1).countByValue()
 
-    df2.show()
-    df2.agg(functions.max($"p2"), functions.min($"p2")).show()
+    //    The result of the histogram are two arrays.
+//      First array contains the starting values of each bin
+//      Second array contains the count for each bin
 
+//    import org.apache.spark.sql.catalyst.TableIdentifier
+//    val sessionCatalog = sparkSession.sessionState.catalog
+//
+//    val tableName = "name"
+//    val tableId = TableIdentifier(tableName)
+//
+//    sessionCatalog.dropTable(tableId, ignoreIfNotExists = true, purge = true)
+//    hashednameTab.write.saveAsTable(tableName)
+//
+//
+//
+//    val allCols = hashednameTab.columns.mkString(",")
+//    val analyzeTableSQL = s"ANALYZE TABLE $tableName COMPUTE STATISTICS FOR COLUMNS $allCols"
+//    //    val plan = sparkSession.sql(analyzeTableSQL).queryExecution.logical
+//
+//
+//    sparkSession.sql(analyzeTableSQL)
+//    val stats = sessionCatalog.getTableMetadata(tableId).stats.get
+//    println(stats.simpleString)
+//
+//    val descExtSQL = s"DESC EXTENDED $tableName hash"
+//    sparkSession.sql(descExtSQL).show(truncate = false)
 
 
   }
