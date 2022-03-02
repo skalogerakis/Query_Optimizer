@@ -196,21 +196,42 @@ object MainTester {
 //    emailTab.show(10,false)
     nameTab.show(10,false)
     telephoneTab.show(10,false)
-    worksForTab.show(10,false)
+//    worksForTab.show(10,false)
 //    typeTab.show(10,false)
 
 
 
     import sparkSession.implicits._
 
-//    println("Distinct "+ nameTab.select("_2").distinct.count)
-//    nameTab.sort("_2").show(10)
-    val hashednameTab = nameTab.withColumn("hash", functions.hash($"_2")) //TODO also md5 function however returns hex
+    println("Distinct "+ nameTab.select("_2").distinct.count)
+    nameTab.sort("_2").show(10)
+    val hashednameTab = nameTab.withColumn("hash", functions.hash($"_1")) //TODO also md5 function however returns hex
     println("Distinct "+ hashednameTab.select("hash").distinct.count)
-
+    hashednameTab.show(10,false)
+//
 //    val histCol1 = hashednameTab.select(col("hash")).rdd.map(record => record.getInt(0)).countByValue()
-////    println(histCol1.foreach(println))
-////    println(histCol1)
+//    println(histCol1)
+//
+//    val hashedteleTab = telephoneTab.withColumn("hash1", functions.hash($"_1"))
+//    println("Distinct2 "+ hashedteleTab.select("hash1").distinct.count)
+//    hashedteleTab.show(10,false)
+//
+//    val histCol2 = hashedteleTab.select(col("hash1")).rdd.map(record => record.getInt(0)).countByValue()
+//    println(histCol2)
+
+//    var runningCount= 0
+//
+//    for(i <- histCol1){
+//      if(histCol2.contains(i._1)){
+//        runningCount += histCol2(i._2)
+//      }
+//    }
+//    print("R "+runningCount)
+//    val check = hashednameTab.join(hashedteleTab, hashednameTab("_1") === hashedteleTab("_1"), "inner")
+//    check.show(10,false)
+//    print("Final count "+check.count())
+
+
 //
 //    val (ranges, counts) = hashednameTab.select(col("hash")).rdd.map(r => r.getInt(0)).histogram(2)
 //    println(ranges.mkString(" "))
@@ -221,28 +242,27 @@ object MainTester {
 //      First array contains the starting values of each bin
 //      Second array contains the count for each bin
 
-//    import org.apache.spark.sql.catalyst.TableIdentifier
-//    val sessionCatalog = sparkSession.sessionState.catalog
-//
-//    val tableName = "name"
-//    val tableId = TableIdentifier(tableName)
-//
-//    sessionCatalog.dropTable(tableId, ignoreIfNotExists = true, purge = true)
-//    hashednameTab.write.saveAsTable(tableName)
-//
-//
-//
-//    val allCols = hashednameTab.columns.mkString(",")
-//    val analyzeTableSQL = s"ANALYZE TABLE $tableName COMPUTE STATISTICS FOR COLUMNS $allCols"
-//    //    val plan = sparkSession.sql(analyzeTableSQL).queryExecution.logical
-//
-//
-//    sparkSession.sql(analyzeTableSQL)
+    import org.apache.spark.sql.catalyst.TableIdentifier
+    val sessionCatalog = sparkSession.sessionState.catalog
+
+    val tableName = "name"
+    val tableId = TableIdentifier(tableName)
+
+    sessionCatalog.dropTable(tableId, ignoreIfNotExists = true, purge = true)
+    hashednameTab.write.saveAsTable(tableName)
+
+    val allCols = hashednameTab.columns.mkString(",")
+    val analyzeTableSQL = s"ANALYZE TABLE $tableName COMPUTE STATISTICS FOR COLUMNS $allCols"
+    //    val plan = sparkSession.sql(analyzeTableSQL).queryExecution.logical
+
+
+    sparkSession.sql(analyzeTableSQL)
 //    val stats = sessionCatalog.getTableMetadata(tableId).stats.get
 //    println(stats.simpleString)
-//
-//    val descExtSQL = s"DESC EXTENDED $tableName hash"
-//    sparkSession.sql(descExtSQL).show(truncate = false)
+
+    val descExtSQL = s"DESC EXTENDED $tableName hash"
+    sparkSession.sql(descExtSQL).show(truncate = false)
+
 
 
   }

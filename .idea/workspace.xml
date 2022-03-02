@@ -7,7 +7,6 @@
     <list default="true" id="d757eb01-8770-4ae2-bf54-090500029d0d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$$typecreator5$1.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -79,7 +78,8 @@
       <updated>1645530907631</updated>
       <workItem from="1645530911358" duration="777000" />
       <workItem from="1645700251742" duration="7521000" />
-      <workItem from="1645778738993" duration="10461000" />
+      <workItem from="1645778738993" duration="13035000" />
+      <workItem from="1646222818952" duration="5815000" />
     </task>
     <servers />
   </component>
@@ -102,8 +102,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="scala-line">
           <url>file://$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala</url>
-          <line>211</line>
-          <option name="timeStamp" value="3" />
+          <line>257</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
