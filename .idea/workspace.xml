@@ -80,6 +80,7 @@
       <workItem from="1645700251742" duration="7521000" />
       <workItem from="1645778738993" duration="13035000" />
       <workItem from="1646222818952" duration="5815000" />
+      <workItem from="1646296182063" duration="10737000" />
     </task>
     <servers />
   </component>
@@ -102,8 +103,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="scala-line">
           <url>file://$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala</url>
-          <line>257</line>
-          <option name="timeStamp" value="5" />
+          <line>222</line>
+          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

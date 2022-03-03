@@ -172,7 +172,8 @@ object MainTester {
       .master("local[*]")
 //      .config("spark.sql.cbo.enabled", "true")
       .config("spark.sql.statistics.histogram.enabled", "true")
-      .config("spark.sql.statistics.histogram.numBins", 200)
+      .config("spark.sql.cbo.enabled", "true")
+      .config("spark.sql.statistics.histogram.numBins", 20)
       .getOrCreate()
 
     //This hides too much log information and sets log level to error
@@ -205,63 +206,51 @@ object MainTester {
 
     println("Distinct "+ nameTab.select("_2").distinct.count)
     nameTab.sort("_2").show(10)
-    val hashednameTab = nameTab.withColumn("hash", functions.hash($"_1")) //TODO also md5 function however returns hex
+    val hashednameTab = nameTab.withColumn("hash", functions.hash($"_2")) //TODO also md5 function however returns hex
     println("Distinct "+ hashednameTab.select("hash").distinct.count)
     hashednameTab.show(10,false)
-//
-//    val histCol1 = hashednameTab.select(col("hash")).rdd.map(record => record.getInt(0)).countByValue()
-//    println(histCol1)
-//
-//    val hashedteleTab = telephoneTab.withColumn("hash1", functions.hash($"_1"))
-//    println("Distinct2 "+ hashedteleTab.select("hash1").distinct.count)
-//    hashedteleTab.show(10,false)
-//
-//    val histCol2 = hashedteleTab.select(col("hash1")).rdd.map(record => record.getInt(0)).countByValue()
-//    println(histCol2)
 
-//    var runningCount= 0
-//
-//    for(i <- histCol1){
-//      if(histCol2.contains(i._1)){
-//        runningCount += histCol2(i._2)
-//      }
-//    }
-//    print("R "+runningCount)
-//    val check = hashednameTab.join(hashedteleTab, hashednameTab("_1") === hashedteleTab("_1"), "inner")
-//    check.show(10,false)
-//    print("Final count "+check.count())
-
-
-//
-//    val (ranges, counts) = hashednameTab.select(col("hash")).rdd.map(r => r.getInt(0)).histogram(2)
-//    println(ranges.mkString(" "))
-//    println(counts.mkString(" "))
-//    val histCol1 = RDD.map(record => record.col_1).countByValue()
-
-    //    The result of the histogram are two arrays.
-//      First array contains the starting values of each bin
-//      Second array contains the count for each bin
 
     import org.apache.spark.sql.catalyst.TableIdentifier
     val sessionCatalog = sparkSession.sessionState.catalog
 
     val tableName = "name"
-    val tableId = TableIdentifier(tableName)
 
-    sessionCatalog.dropTable(tableId, ignoreIfNotExists = true, purge = true)
     hashednameTab.write.saveAsTable(tableName)
+//    hashednameTab.createOrReplaceTempView(tableName)
+//    sparkSession.sqlContext.cacheTable(tableName)
 
     val allCols = hashednameTab.columns.mkString(",")
     val analyzeTableSQL = s"ANALYZE TABLE $tableName COMPUTE STATISTICS FOR COLUMNS $allCols"
-    //    val plan = sparkSession.sql(analyzeTableSQL).queryExecution.logical
-
-
-    sparkSession.sql(analyzeTableSQL)
-//    val stats = sessionCatalog.getTableMetadata(tableId).stats.get
-//    println(stats.simpleString)
+    sparkSession.sqlContext.sql(analyzeTableSQL)
 
     val descExtSQL = s"DESC EXTENDED $tableName hash"
-    sparkSession.sql(descExtSQL).show(truncate = false)
+    sparkSession.sqlContext.sql(descExtSQL).show(truncate = false)
+
+    //  TODO this one option that could return the exact results
+        val histCol1 = hashednameTab.select(col("hash")).rdd.map(record => record.getInt(0)).countByValue()
+        println(histCol1)
+    //
+    //    val hashedteleTab = telephoneTab.withColumn("hash1", functions.hash($"_1"))
+    //    println("Distinct2 "+ hashedteleTab.select("hash1").distinct.count)
+    //    hashedteleTab.show(10,false)
+    //
+    //    val histCol2 = hashedteleTab.select(col("hash1")).rdd.map(record => record.getInt(0)).countByValue()
+    //    println(histCol2)
+
+
+
+        //TODO this is another option
+//        val (ranges, counts) = hashednameTab.select(col("hash")).rdd.map(r => r.getInt(0)).histogram(2)
+//        println(ranges.mkString(" "))
+//        println(counts.mkString(" "))
+//        val histCol1 = RDD.map(record => record.col_1).countByValue()
+
+    //TODO another option is also bucketing, requires to create table
+
+    //    The result of the histogram are two arrays.
+    //      First array contains the starting values of each bin
+    //      Second array contains the count for each bin
 
 
 
