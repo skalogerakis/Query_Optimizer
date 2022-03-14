@@ -2,7 +2,7 @@ package mainTestPackage
 
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.sql.functions.{col, column, countDistinct, hash, md5}
-import org.apache.spark.sql.{DataFrame, Row, SparkSession, functions}
+import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession, functions}
 //import org.apache.log4j.{Level, LogManager}
 //import org.apache.spark.sql.functions._
 //import org.apache.spark.sql.SparkSession
@@ -216,7 +216,7 @@ object MainTester {
 
     val tableName = "name"
 
-    hashednameTab.write.saveAsTable(tableName)
+    hashednameTab.write.mode(SaveMode.Overwrite).option("path","/home/skalogerakis/Documents/Workspace/CS460_Bonus/test").saveAsTable(tableName)
 //    hashednameTab.createOrReplaceTempView(tableName)
 //    sparkSession.sqlContext.cacheTable(tableName)
 

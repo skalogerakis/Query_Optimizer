@@ -5,6 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d757eb01-8770-4ae2-bf54-090500029d0d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/checkstyle-idea.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/google-java-format.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/mainTestPackage/MainTester.scala" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/mainTestPackage/MainTester$.class" afterDir="false" />
@@ -43,10 +46,11 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../debs2022" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.last.edited" value="SDKs" />
     <property name="project.structure.proportion" value="0.0" />
-    <property name="project.structure.side.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.37381917" />
   </component>
   <component name="RunManager">
     <configuration name="MainTester" type="Application" factoryName="Application" temporary="true">
@@ -81,6 +85,9 @@
       <workItem from="1645778738993" duration="13035000" />
       <workItem from="1646222818952" duration="5815000" />
       <workItem from="1646296182063" duration="10737000" />
+      <workItem from="1646335232274" duration="1219000" />
+      <workItem from="1647262993092" duration="200000" />
+      <workItem from="1647263227224" duration="409000" />
     </task>
     <servers />
   </component>
